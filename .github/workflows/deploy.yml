@@ -27,7 +27,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::225509306647:role/kc-symphony-mobile-music-box-events-github-deploy-role
+          role-to-assume: ${{ secrets.ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Install dependencies

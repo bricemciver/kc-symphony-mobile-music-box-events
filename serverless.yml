@@ -6,9 +6,12 @@ provider:
   runtime: nodejs24.x
   environment:
     EVENTS_URL: https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
+  domain:
+    name: ${ssm:/kc-symphony-mobile-music-box-events/domain-name}
+    certificateArn: ${ssm:/kc-symphony-mobile-music-box-events/certificate-arn}
+    createRoute53Record: false
+    apiType: httpApi
+    endpointType: regional
 
 functions:
   hello:
