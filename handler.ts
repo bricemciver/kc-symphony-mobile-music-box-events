@@ -1,6 +1,6 @@
 import type { Handler } from "aws-lambda";
 import axios from "axios";
-import { JSDOM } from "jsdom";
+import * as cheerio from 'cheerio';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -64,29 +64,28 @@ const findType = (text: string): Partial<Record<keyof ConcertEntry, string>> => 
 
 const parsePage = (html: string) => {
   const events: ConcertEntry[] = [];
-  const dom = new JSDOM(html);
-  const document = dom.window.document;
+  const $ = cheerio.load(html);
 
   // Find the concert calendar
-  const calendar = [
-    ...document.querySelectorAll<HTMLAnchorElement>("a.accordion-toggle"),
-  ].find((item) => item.textContent.trim().toLowerCase().includes("concert calendar"));
+  const calendar = $('a.accordion-toggle').filter((i, el) => {
+    return $(el).text().trim().toLowerCase().includes("concert calendar");
+  });
 
-  if (!calendar) {
+  if (calendar.length === 0) {
     console.log("Unable to find calendar section");
     return events;
   }
 
   // Get the accordion content
-  const concertAccordion = calendar.nextElementSibling;
+  const concertAccordion = calendar.next();
 
-  if (!concertAccordion) {
+  if (concertAccordion.length === 0) {
     console.log("Unable to find entries");
     return events;
   }
 
   // Iterate over the entries
-  for (const entry of concertAccordion.querySelectorAll("p")) {
+  concertAccordion.find('p').each((i, entry) => {
     let concertEntry: ConcertEntry = {
       address: "",
       location: "",
@@ -95,16 +94,18 @@ const parsePage = (html: string) => {
       date: "",
       alert: "",
     };
-    const lines = entry.innerHTML.split("<br>");
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      const type = findType(trimmedLine);
-      concertEntry = { ...concertEntry, ...type };
+    const lines = $(entry).html()?.split("<br>");
+    if (lines) {
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        const type = findType(trimmedLine);
+        concertEntry = { ...concertEntry, ...type };
+      }
     }
     if (concertEntry.date && concertEntry.location) {
       events.push(concertEntry);
     }
-  }
+  });
 
   return events;
 };
@@ -124,3 +125,4 @@ export const hello: Handler = async (event) => {
     };
   }
 };
+
