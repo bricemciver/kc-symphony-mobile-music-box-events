@@ -6,11 +6,9 @@ provider:
   runtime: nodejs24.x
   environment:
     EVENTS_URL: https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
   domain:
-    name: mmbapi.bricemciver.com
-    certificateArn: arn:aws:acm:us-east-1:225509306647:certificate/9f15cb6d-0c94-4cc4-a21e-d8d310991b83
+    name: ${ssm:/kc-symphony-mobile-music-box-events/domain-name}
+    certificateArn: ${ssm:/kc-symphony-mobile-music-box-events/certificate-arn}
     createRoute53Record: false
     apiType: httpApi
     endpointType: regional
