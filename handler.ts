@@ -1,10 +1,15 @@
-import type { Handler } from "aws-lambda";
+import type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  Handler,
+} from "aws-lambda";
+
 import axios from "axios";
-import * as cheerio from 'cheerio';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { load } from "cheerio";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 // Extend dayjs with the plugins
 dayjs.extend(utc);
@@ -22,7 +27,9 @@ type ConcertEntry = {
 
 const getEventsPage = async (url?: string) => {
   return axios.get<string>(
-    url ?? process.env.EVENTS_URL ?? "https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/",
+    url ??
+      process.env.EVENTS_URL ??
+      "https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/",
   );
 };
 
@@ -34,40 +41,47 @@ const convertDateToISO = (dateString: string): string => {
   return date.format();
 };
 
-const findType = (text: string): Partial<Record<keyof ConcertEntry, string>> => {
+const findType = (
+  text: string,
+): Partial<Record<keyof ConcertEntry, string>> => {
   let match = /<span class="text-alert">(.*?)<\/span>/.exec(text);
   if (match) {
-    return { alert: match[1]};
+    return { alert: match[1] };
   }
   match = /Sponsored by (.*)/.exec(text);
   if (match) {
-    return { sponsor: match[1]};
+    return { sponsor: match[1] };
   }
   match = /<em>(.*?)<\/em>/.exec(text);
   if (match) {
-    return { notes: match[1]};
+    return { notes: match[1] };
   }
-  match = /(?:Sun|Mon|Tues|Wednes|Thurs|Fri|Satur)day, (.*? at .*?[AP]M)/.exec(text);
+  match = /(?:Sun|Mon|Tues|Wednes|Thurs|Fri|Satur)day, (.*? at .*?[AP]M)/.exec(
+    text,
+  );
   if (match) {
-    return { date: convertDateToISO(match[1])};
+    return { date: convertDateToISO(match[1]) };
   }
-  match = /<(?:strong|b)>(.*?)\s*(?:[–-]\s*<\/(?:strong|b)>\s*|<\/(?:strong|b)>\s*[–-]\s*)(.*)/.exec(text);
+  match =
+    /<(?:strong|b)>(.*?)\s*(?:[–-]\s*<\/(?:strong|b)>\s*|<\/(?:strong|b)>\s*[–-]\s*)(.*)/.exec(
+      text,
+    );
   if (match) {
-    return { location: match[1], address: match[2]};
+    return { location: match[1], address: match[2] };
   }
   match = /<(?:strong|b)>(.*?)<\/(?:strong|b)>/.exec(text);
   if (match) {
-    return { location: match[1]};
+    return { location: match[1] };
   }
   return {};
 };
 
 const parsePage = (html: string) => {
   const events: ConcertEntry[] = [];
-  const $ = cheerio.load(html);
+  const $ = load(html);
 
   // Find the concert calendar
-  const calendar = $('a.accordion-toggle').filter((i, el) => {
+  const calendar = $("a.accordion-toggle").filter((_i, el) => {
     return $(el).text().trim().toLowerCase().includes("concert calendar");
   });
 
@@ -85,7 +99,7 @@ const parsePage = (html: string) => {
   }
 
   // Iterate over the entries
-  concertAccordion.find('p').each((i, entry) => {
+  concertAccordion.find("p").each((_i, entry) => {
     let concertEntry: ConcertEntry = {
       address: "",
       location: "",
@@ -110,19 +124,24 @@ const parsePage = (html: string) => {
   return events;
 };
 
-export const hello: Handler = async (event) => {
+export const eventHandler: Handler<APIGatewayProxyEvent, APIGatewayProxyResult> = async (event) => {
   try {
     const page = await getEventsPage(event.queryStringParameters?.url);
     const events = parsePage(page.data);
     return {
       statusCode: 200,
-      body: JSON.stringify(events),
-    };
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ events }),
+    } as APIGatewayProxyResult;
   } catch (error) {
     return {
-      statusCode: 500,
+      statusCode: axios.isAxiosError(error) ? error.response?.status : 500,
+      headers: {
+        "Content-Type": axios.isAxiosError(error) ? error.response?.headers : "text/plain",
+      },
       body: axios.isAxiosError(error) ? error.toJSON() : error,
-    };
+    } as APIGatewayProxyResult;
   }
 };
-
