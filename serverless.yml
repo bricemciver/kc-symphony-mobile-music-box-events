@@ -22,7 +22,7 @@ build:
 
 functions:
   hello:
-    handler: handler.hello
+    handler: handler.eventHandler
     events:
       - httpApi:
           path: /
