@@ -13,6 +13,13 @@ provider:
     apiType: http
     endpointType: regional
 
+build:
+  esbuild:
+    external:
+      - 'jsdom'
+    exclude:
+      - 'jsdom'
+
 functions:
   hello:
     handler: handler.hello
