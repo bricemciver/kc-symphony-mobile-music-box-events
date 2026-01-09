@@ -1,0 +1,19 @@
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: kc-symphony-mobile-music-box-events
+
+provider:
+  name: aws
+  runtime: nodejs24.x
+  environment:
+    EVENTS_URL: https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/
+  # Uncomment to easily set up a custom domain. Read the docs for more details:
+  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
+  # domain: api.example.com
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+          path: /
+          method: get
