@@ -10,7 +10,7 @@ provider:
     name: ${ssm:/kc-symphony-mobile-music-box-events/domain-name}
     certificateArn: ${ssm:/kc-symphony-mobile-music-box-events/certificate-arn}
     createRoute53Record: false
-    apiType: httpApi
+    apiType: http
     endpointType: regional
 
 functions:
