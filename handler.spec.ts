@@ -1,7 +1,6 @@
 import axios from "axios";
-import { hello } from "./handler";
+import { eventHandler } from "./handler";
 import type { APIGatewayProxyEvent } from "aws-lambda";
-
 
 describe("hello handler", () => {
   it("should return events from the page", async () => {
@@ -26,22 +25,22 @@ describe("hello handler", () => {
       }
     }
     for (const url of urls) {
-      const lambdaResult = await hello({
+      const lambdaResult = await eventHandler({
         queryStringParameters: {
           url,
         },
         body: null,
         headers: {},
         multiValueHeaders: {},
-        httpMethod: 'GET',
+        httpMethod: "GET",
         isBase64Encoded: false,
         path: "",
         pathParameters: null,
         multiValueQueryStringParameters: null,
         stageVariables: null,
-        requestContext: {} as any,
+        requestContext: {} as unknown,
         resource: "",
-      } as APIGatewayProxyEvent, {} as any, {} as any);
+      } as APIGatewayProxyEvent);
       console.log(`Testing ${url}`);
       expect(lambdaResult.statusCode).toBe(200);
       expect(lambdaResult.body.length).toBeGreaterThan(0);

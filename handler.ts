@@ -1,8 +1,4 @@
-import type {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Handler,
-} from "aws-lambda";
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 import axios from "axios";
 import { load } from "cheerio";
@@ -124,7 +120,9 @@ const parsePage = (html: string) => {
   return events;
 };
 
-export const eventHandler: Handler<APIGatewayProxyEvent, APIGatewayProxyResult> = async (event) => {
+export const eventHandler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   try {
     const page = await getEventsPage(event.queryStringParameters?.url);
     const events = parsePage(page.data);
@@ -139,7 +137,9 @@ export const eventHandler: Handler<APIGatewayProxyEvent, APIGatewayProxyResult> 
     return {
       statusCode: axios.isAxiosError(error) ? error.response?.status : 500,
       headers: {
-        "Content-Type": axios.isAxiosError(error) ? error.response?.headers : "text/plain",
+        "Content-Type": axios.isAxiosError(error)
+          ? error.response?.headers
+          : "text/plain",
       },
       body: axios.isAxiosError(error) ? error.toJSON() : error,
     } as APIGatewayProxyResult;
