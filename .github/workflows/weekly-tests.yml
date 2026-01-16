@@ -1,0 +1,44 @@
+name: Weekly Tests
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Run every Sunday at 3 AM
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        id: tests
+        run: npm test
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue_title = "Weekly test run failed";
+            const issue_body = `The weekly test run failed on ${new Date().toUTCString()}.
+
+            [View run details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issue_title,
+              body: issue_body
+            });
