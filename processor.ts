@@ -55,7 +55,7 @@ export const processEntry = (root: cheerio.Root, entry: cheerio.Element): Concer
     address: "", location: "", sponsor: "", notes: "", date: "", alert: "",
   };
 
-  const cleanedEntry = root(entry).html()?.replace(/<.*?>/g, "<tag>");
+  const cleanedEntry = root(entry).html()?.replace(/<.*?>/g, "<tag>").replace(/\n/g, "");
   const lines = cleanedEntry?.split("<tag>").filter((item) => item.length > 0) ?? [];
 
   let state = "date";
@@ -86,8 +86,8 @@ const convertDateToISO = (dateString: string): string => {
   const year = new Date().getFullYear();
   // Normalize the datePart: Remove day of week, just keep month and day
   const normalizedDatePart = datePart.replace(/(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*,/gi, "")
-  // Normalize the timePart: remove spaces and periods, and convert to uppercase
-  let normalizedTimePart = timePart.replace(/[\s.]/g, "").toUpperCase();
+  // Normalize the timePart: remove spaces and periods and typos, and convert to uppercase
+  let normalizedTimePart = timePart.replace(/[\s.\[]/g, "").toUpperCase();
   // If we don't have minutes (no ':'), add it in with '00' as the minutes
   if (normalizedTimePart.indexOf(":") == -1) {
     const timeStr = /(\d*)([PpAa][Mm])/gi.exec(normalizedTimePart)
