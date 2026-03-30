@@ -40,7 +40,8 @@ const parsers: Record<string, (line: string, entry: ConcertEntry) => string | nu
       entry.address = line.replace(/[-–] /g, "");
       return "sponsor";
     }
-    entry.notes = line;
+    const cleanNotes = line.replace(/^[-–] /g, "");
+    entry.notes = cleanNotes;
     return null; // stay on "address"
   },
   sponsor: (line, entry) => {
@@ -55,7 +56,7 @@ export const processEntry = (root: cheerio.Root, entry: cheerio.Element): Concer
     address: "", location: "", sponsor: "", notes: "", date: "", alert: "",
   };
 
-  const cleanedEntry = root(entry).html()?.replace(/<.*?>/g, "<tag>").replace(/\n/g, "");
+  const cleanedEntry = root(entry).html()?.replace(/<.*?>/g, "<tag>").replace(/\n/g, "").replace(/&nbsp;/g, "");
   const lines = cleanedEntry?.split("<tag>").filter((item) => item.length > 0) ?? [];
 
   let state = "date";
