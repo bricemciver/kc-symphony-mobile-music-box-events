@@ -16,6 +16,7 @@
     "test:cov": "vitest run --coverage",
     "test:watch": "vitest"
   },
+  "packageManager": "pnpm@10.33.0",
   "volta": {
     "node": "24.14.0",
     "pnpm": "10.33.0"
