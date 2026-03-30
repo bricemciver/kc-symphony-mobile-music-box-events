@@ -68,6 +68,14 @@ describe("processor", () => {
         "notes": "",
         "sponsor": "Evergy &amp; Shook, Hardy &amp; Bacon L.L.P.",
       }],
+      ["<p>Tuesday, June 9 at 6 p.m.<br><strong>Shawnee Mission Park Inclusive Playground</strong>&nbsp;<strong>– Woodwind Quintet</strong><br>7900 Renner Rd, Shawnee, KS 66219<br>Sponsored by Evergy</p>", {
+        "address": "7900 Renner Rd, Shawnee, KS 66219",
+        "alert": "",
+        "date": "2026-06-09T18:00:00-05:00",
+        "location": "Shawnee Mission Park Inclusive Playground",
+        "notes": "Woodwind Quintet",
+        "sponsor": "Evergy",
+      }]
     ])("should convert to ConcertEntry object", (input, expected) => {
       const $ = load(input)
       const result = processEntry($, $("p").toArray()[0]);
