@@ -3,15 +3,21 @@
   "version": "0.0.1",
   "private": true,
   "description": "Read events from the KC Symphony Mobile Music Box webpage and format into JSON for programatic use.",
-  "author": "Brice McIver (github@bricemciver.com)",
   "license": "MIT",
+  "author": "Brice McIver (github@bricemciver.com)",
+  "type": "module",
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "npm run lint -- --fix",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt --check",
+    "format:fix": "oxfmt",
     "pretest": "npm run lint",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
     "test:watch": "vitest"
+  },
+  "volta": {
+    "node": "24.14.0"
   },
   "dependencies": {
     "axios": "^1.13.2",
@@ -19,17 +25,14 @@
     "dayjs": "^1.11.19"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
     "@types/aws-lambda": "^8.10.159",
     "@types/cheerio": "^0.22.35",
     "@types/jest": "^29.5.12",
     "@types/node": "^24.10.9",
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.5",
-    "globals": "^17.0.0",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
+    "oxlint-tsgolint": "^0.18.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0",
     "vitest": "^4.1.2"
   }
 }

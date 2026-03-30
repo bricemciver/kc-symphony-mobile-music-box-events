@@ -6,11 +6,11 @@ The primary goal of this project is to provide a structured, machine-readable fo
 
 ## Features
 
--   Fetches the latest event data directly from the KC Symphony's "Neighborhood Concerts" page.
--   Parses the HTML to extract individual event details.
--   Converts event dates and times to ISO 8601 format, adjusted for the Kansas City (America/Chicago) timezone.
--   Handles various text formats and notes associated with each event.
--   Deploys as a single, lightweight AWS Lambda function managed by the Serverless Framework.
+- Fetches the latest event data directly from the KC Symphony's "Neighborhood Concerts" page.
+- Parses the HTML to extract individual event details.
+- Converts event dates and times to ISO 8601 format, adjusted for the Kansas City (America/Chicago) timezone.
+- Handles various text formats and notes associated with each event.
+- Deploys as a single, lightweight AWS Lambda function managed by the Serverless Framework.
 
 ## Usage
 
