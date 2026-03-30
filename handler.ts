@@ -2,7 +2,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 import axios from "axios";
 import { load } from "cheerio";
-import { ConcertEntry, findType, isLikelyAddress } from "./lineProcessor";
+import { ConcertEntry, processEntry } from "./processor";
 
 const getEventsPage = async (url?: string) => {
   return axios.get<string>(
@@ -36,32 +36,7 @@ const parsePage = (html: string) => {
 
   // Iterate over the entries
   concertAccordion.find("p").each((_i, entry) => {
-    let concertEntry: ConcertEntry = {
-      address: "",
-      location: "",
-      sponsor: "",
-      notes: "",
-      date: "",
-      alert: "",
-    };
-    const lines = $(entry).html()?.split("<br>");
-    if (lines) {
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        const type = findType(trimmedLine);
-        concertEntry = { ...concertEntry, ...type };
-      }
-    }
-    // If we have an address that doesn't look like an address and we don't have notes yet,
-    // treat the address as notes
-    if (
-      concertEntry.address &&
-      !concertEntry.notes &&
-      !isLikelyAddress(concertEntry.address)
-    ) {
-      concertEntry.notes = concertEntry.address;
-      concertEntry.address = "";
-    }
+    const concertEntry = processEntry($, entry);
     if (concertEntry.date && concertEntry.location) {
       events.push(concertEntry);
     }
