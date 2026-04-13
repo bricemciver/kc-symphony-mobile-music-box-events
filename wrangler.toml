@@ -1,0 +1,6 @@
+name = "kc-symphony-mobile-music-box-events"
+main = "./handler.ts"
+compatibility_date = "2024-05-06"
+
+[vars]
+EVENTS_URL = "https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/"

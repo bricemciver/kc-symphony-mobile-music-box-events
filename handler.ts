@@ -1,13 +1,20 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-
-import axios from 'axios';
+import type { ExecutionContext, ExportedHandler } from '@cloudflare/workers-types';
 import { load } from 'cheerio';
 import { type ConcertEntry, processEntry } from './processor';
 
+const EVENTS_URL_DEFAULT = 'https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/';
+
+interface Env {
+  EVENTS_URL?: string;
+}
+
 const getEventsPage = async (url?: string) => {
-  return axios.get<string>(
-    url ?? process.env.EVENTS_URL ?? 'https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/',
-  );
+  const targetUrl = url ?? EVENTS_URL_DEFAULT;
+  const response = await fetch(targetUrl);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.text();
 };
 
 const parsePage = (html: string) => {
@@ -43,24 +50,24 @@ const parsePage = (html: string) => {
   return events;
 };
 
-export const eventHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  try {
-    const page = await getEventsPage(event.queryStringParameters?.url);
-    const events = parsePage(page.data);
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ events }),
-    } as APIGatewayProxyResult;
-  } catch (error) {
-    return {
-      statusCode: axios.isAxiosError(error) ? error.response?.status : 500,
-      headers: {
-        'Content-Type': axios.isAxiosError(error) ? error.response?.headers : 'text/plain',
-      },
-      body: axios.isAxiosError(error) ? error.toJSON() : error,
-    } as APIGatewayProxyResult;
-  }
-};
+export default {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+    try {
+      const url = new URL(request.url);
+      const requestedUrl = url.searchParams.get('url');
+      const eventsUrl = requestedUrl ?? env.EVENTS_URL ?? EVENTS_URL_DEFAULT;
+
+      const page = await getEventsPage(eventsUrl);
+      const events = parsePage(page);
+
+      return Response.json({ events });
+    } catch (error) {
+      return Response.json(
+        { error: error instanceof Error ? error.message : String(error) },
+        {
+          status: 500,
+        },
+      );
+    }
+  },
+} satisfies ExportedHandler;

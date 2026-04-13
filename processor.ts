@@ -1,7 +1,9 @@
+import type { CheerioAPI } from 'cheerio';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+import type { Element } from 'domhandler';
 
 // Extend dayjs with the plugins
 dayjs.extend(utc);
@@ -40,10 +42,10 @@ const parsers: Record<string, (line: string, entry: ConcertEntry) => string | nu
   },
   address: (line, entry) => {
     if (isLikelyAddress(line)) {
-      entry.address = line.replace(/[-–] /g, '');
+      entry.address = line.replaceAll(/[-–] /g, '');
       return 'sponsor';
     }
-    const cleanNotes = line.replace(/^[-–] /g, '');
+    const cleanNotes = line.replaceAll(/^[-–] /g, '');
     entry.notes = cleanNotes;
     return null; // stay on "address"
   },
@@ -57,7 +59,7 @@ const parsers: Record<string, (line: string, entry: ConcertEntry) => string | nu
   },
 };
 
-export const processEntry = (root: cheerio.Root, entry: cheerio.Element): ConcertEntry => {
+export const processEntry = (root: CheerioAPI, entry: Element): ConcertEntry => {
   const concertEntry: ConcertEntry = {
     address: '',
     location: '',
@@ -69,9 +71,9 @@ export const processEntry = (root: cheerio.Root, entry: cheerio.Element): Concer
 
   const cleanedEntry = root(entry)
     ?.html()
-    ?.replace(/<.*?>/g, '<tag>')
-    ?.replace(/\n/g, '')
-    ?.replace(/&nbsp;/g, '');
+    ?.replaceAll(/<.*?>/g, '<tag>')
+    ?.replaceAll('\n', '')
+    ?.replaceAll('&nbsp;', '');
   const lines = cleanedEntry?.split('<tag>')?.filter(item => item?.length > 0) ?? [];
 
   let state = 'date';
@@ -101,14 +103,14 @@ const convertDateToISO = (dateString: string): string => {
   }
   const year = new Date().getFullYear();
   // Normalize the datePart: Remove day of week, just keep month and day
-  const normalizedDatePart = datePart.replace(
+  const normalizedDatePart = datePart.replaceAll(
     /(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*,/gi,
     '',
   );
   // Normalize the timePart: remove spaces and periods and typos, and convert to uppercase
-  let normalizedTimePart = timePart.replace(/[\s.[\]]/g, '').toUpperCase();
+  let normalizedTimePart = timePart.replaceAll(/[\s.[\]]/g, '').toUpperCase();
   // If we don't have minutes (no ':'), add it in with '00' as the minutes
-  if (normalizedTimePart.indexOf(':') == -1) {
+  if (!normalizedTimePart.includes(':')) {
     const timeStr = /(\d{1,2})(AM|PM)/.exec(normalizedTimePart);
     if (timeStr) {
       normalizedTimePart = `${timeStr[1]}:00${timeStr[2]}`;
@@ -124,7 +126,7 @@ const isLikelyAddress = (str: string) => {
   let maybeAddress = /,\s*[A-Z]{2}\s*$/.test(str);
   if (!maybeAddress) {
     // check for a KC metro area zipcode at the end
-    maybeAddress = /[6][46]\d{3}\s*$/.test(str);
+    maybeAddress = /6[46]\d{3}\s*$/.test(str);
   }
   return maybeAddress;
 };
