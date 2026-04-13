@@ -1,5 +1,6 @@
 import { load } from 'cheerio';
 import { type ConcertEntry, processEntry } from './processor';
+import { describe, expect, it } from 'vitest';
 
 describe('processor', () => {
   describe('test different entry formats', () => {

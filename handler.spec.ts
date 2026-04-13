@@ -1,54 +1,78 @@
-import axios from 'axios';
-import { eventHandler } from './handler';
-import type { APIGatewayProxyEvent } from 'aws-lambda';
+import { describe, expect, it, vi } from 'vitest';
+import worker from './handler';
 
-describe('hello handler', () => {
+describe('cloudflare worker', () => {
   it('should return events from the page', async () => {
-    // test against the current page and the last 10 captures from Wayback Machine
-    const urls = ['https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/'];
-    const result = await axios.get<string>('http://web.archive.org/cdx/search/cdx', {
-      params: {
-        url: 'https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/',
-        limit: -10,
-        filter: 'statuscode:200',
-        fl: 'timestamp,original',
-        fastLatest: true,
-      },
-    });
-    // read result line by line
-    for (const line of result.data.split('\n')) {
-      const [timestamp, url] = line.split(' ');
-      if (timestamp && url) {
-        urls.push(`https://web.archive.org/web/${timestamp}/${url}`);
-      }
-    }
-    for (const url of urls) {
-      const lambdaResult = await eventHandler({
-        queryStringParameters: {
-          url,
-        },
-        body: null,
-        headers: {},
-        multiValueHeaders: {},
-        httpMethod: 'GET',
-        isBase64Encoded: false,
-        path: '',
-        pathParameters: null,
-        multiValueQueryStringParameters: null,
-        stageVariables: null,
-        requestContext: {} as unknown,
-        resource: '',
-      } as APIGatewayProxyEvent);
-      console.log(`Testing ${url}`);
-      expect(lambdaResult.statusCode).toBe(200);
-      expect(lambdaResult.body.length).toBeGreaterThan(0);
-      const events = JSON.parse(lambdaResult.body);
-      if (events.length > 0) {
-        for (const event of events) {
-          expect(event.date).toBeTruthy();
-          expect(event.location).toBeTruthy();
-        }
-      }
-    }
-  }, 60000);
+    // Mock the fetch function
+    const mockFetch = vi.fn<typeof fetch>();
+    globalThis.fetch = mockFetch;
+
+    // Mock response from KC Symphony website - matching the real format
+    const htmlContent = `
+      <html>
+        <body>
+          <a class="accordion-toggle">Concert Calendar</a>
+          <div class="accordion-content">
+            <p>Saturday, May 15, 2026 at 7:00PM<br>Kauffman Center for the Performing Arts - 1 Broadway Blvd, Kansas City, MO 64105<br>Sponsored by Kansas City Symphony Guild</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    console.log('Mock HTML:', htmlContent);
+
+    // Properly mock Response object
+    mockFetch.mockResolvedValueOnce(
+      new Response(htmlContent, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      }),
+    );
+
+    // Create a mock request
+    const request = new Request('https://example.com/');
+    const env = {};
+    const ctx = {};
+
+    // Call the worker
+    const response = await worker.fetch(request, env, ctx);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const json = await response.json();
+    console.log('Events returned:', json.events);
+    expect(json.events).toHaveLength(1);
+    expect(json.events[0].date).toMatch(/2026-05-15/);
+    expect(json.events[0].location).toBe('Kauffman Center for the Performing Arts');
+    expect(json.events[0].address).toBe('1 Broadway Blvd, Kansas City, MO 64105');
+    expect(json.events[0].sponsor).toBe('Kansas City Symphony Guild');
+
+    // Verify fetch was called with correct URL
+    expect(mockFetch).toHaveBeenCalledWith('https://www.kcsymphony.org/concerts-tickets/neighborhood-concerts/');
+  });
+
+  it('should handle errors gracefully', async () => {
+    // Mock fetch to return an error
+    const mockFetch = vi.fn<typeof fetch>();
+    globalThis.fetch = mockFetch;
+
+    // Properly mock Response object for error
+    mockFetch.mockResolvedValueOnce(
+      new Response('Not Found', {
+        status: 404,
+        statusText: 'Not Found',
+      }),
+    );
+
+    const request = new Request('https://example.com/');
+    const env = {};
+    const ctx = {};
+
+    const response = await worker.fetch(request, env, ctx);
+    expect(response.status).toBe(500);
+    expect(response.headers.get('Content-Type')).toBe('application/json');
+
+    const json = await response.json();
+    expect(json.error).toContain('HTTP error! status: 404');
+  });
 });

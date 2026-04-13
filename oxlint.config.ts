@@ -16,13 +16,10 @@ export default defineConfig({
     'no-unused-expressions': ['error', { allowShortCircuit: true }],
     'guard-for-in': 'error',
     'array-callback-return': ['error', { allowImplicit: true }],
-    quotes: ['error', 'single', { avoidEscape: true }],
-    'no-return-await': 'error',
     'max-lines': ['error', { max: 300, skipComments: true, skipBlankLines: true }],
 
     // === Import rules ===
     'import/namespace': 'off',
-    'import/no-unresolved': 'off',
 
     // === Rules turned off (not enforced in ESLint or causing false positives) ===
     'no-control-regex': 'off',
