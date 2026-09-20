@@ -104,6 +104,39 @@ describe('processor', () => {
           sponsor: 'Evergy',
         },
       ],
+      [
+        '<p><strong>September 20, 2026 at 6:30 PM</strong><br />AdventHealth Lenexa City Center<br />16950 West 86th Street<br />Lenexa, KS 66219</p>',
+        {
+          address: '16950 West 86th Street, Lenexa, KS 66219',
+          alert: '',
+          date: '2026-09-20T18:30:00-05:00',
+          location: 'AdventHealth Lenexa City Center',
+          notes: '',
+          sponsor: '',
+        },
+      ],
+      [
+        '<p><strong>September 23, 2026 at 6:00 PM<br /></strong>Wallace Park<br />16400 North Mullen Road<br />Belton, MO 64012</p>',
+        {
+          address: '16400 North Mullen Road, Belton, MO 64012',
+          alert: '',
+          date: '2026-09-23T18:00:00-05:00',
+          location: 'Wallace Park',
+          notes: '',
+          sponsor: '',
+        },
+      ],
+      [
+        '<p><strong>October 6, 2026 at 6:00 PM</strong><br />MLK Park (KCMO)<br />Woodland Ave. &amp; Dr. ML<br />Kansas City, MO 64130</p>',
+        {
+          address: 'Woodland Ave. & Dr. ML, Kansas City, MO 64130',
+          alert: '',
+          date: '2026-10-06T18:00:00-05:00',
+          location: 'MLK Park (KCMO)',
+          notes: '',
+          sponsor: '',
+        },
+      ],
     ])('should convert to ConcertEntry object', (input, expected) => {
       const $ = load(input);
       const result = processEntry($, $('p').toArray()[0]);

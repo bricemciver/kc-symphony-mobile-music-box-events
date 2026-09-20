@@ -42,11 +42,17 @@ const parsers: Record<string, (line: string, entry: ConcertEntry) => string | nu
   },
   address: (line, entry) => {
     if (isLikelyAddress(line)) {
-      entry.address = line.replaceAll(/[-–] /g, '');
+      const looksLikeStreet = /\b(St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Dr|Drive|Ln|Lane|Ct|Court|Pl|Place)\b/i.test(entry.notes);
+      if (isCityStateZip(line) && looksLikeStreet) {
+        entry.address = entry.notes + ', ' + line;
+        entry.notes = '';
+      } else {
+        entry.address = line.replaceAll(/[-–] /g, '');
+      }
       return 'sponsor';
     }
     const cleanNotes = line.replaceAll(/^[-–] /g, '');
-    entry.notes = cleanNotes;
+    entry.notes = entry.notes ? entry.notes + ' ' + cleanNotes : cleanNotes;
     return null; // stay on "address"
   },
   sponsor: (line, entry) => {
@@ -106,7 +112,9 @@ const convertDateToISO = (dateString: string): string => {
   const normalizedDatePart = datePart.replaceAll(
     /(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s*,/gi,
     '',
-  );
+  ).trim();
+  // Check if datePart already contains a year (4 digits)
+  const hasYear = /\b\d{4}\b/.test(normalizedDatePart);
   // Normalize the timePart: remove spaces and periods and typos, and convert to uppercase
   let normalizedTimePart = timePart.replaceAll(/[\s.[\]]/g, '').toUpperCase();
   // If we don't have minutes (no ':'), add it in with '00' as the minutes
@@ -116,10 +124,14 @@ const convertDateToISO = (dateString: string): string => {
       normalizedTimePart = `${timeStr[1]}:00${timeStr[2]}`;
     }
   }
-  const dateStr = `${normalizedDatePart}, ${year} ${normalizedTimePart}`;
-  const date = dayjs.tz(dateStr, 'MMMM D, YYYY h:mmA', 'America/Chicago');
+  const dateStr = hasYear
+    ? `${normalizedDatePart} ${normalizedTimePart}`
+    : `${normalizedDatePart}, ${year} ${normalizedTimePart}`;
+  const date = dayjs.tz(dateStr, hasYear ? 'MMMM D, YYYY h:mmA' : 'MMMM D, YYYY h:mmA', 'America/Chicago');
   return date.format();
 };
+
+const isCityStateZip = (str: string) => /^[A-Z][a-z]+,\s*[A-Z]{2}\s+\d{5}$/.test(str);
 
 const isLikelyAddress = (str: string) => {
   // Check for a comma followed by two uppercase letters (state) at the end
