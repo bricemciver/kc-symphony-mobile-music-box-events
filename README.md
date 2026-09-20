@@ -10,28 +10,28 @@ The primary goal of this project is to provide a structured, machine-readable fo
 - Parses the HTML to extract individual event details.
 - Converts event dates and times to ISO 8601 format, adjusted for the Kansas City (America/Chicago) timezone.
 - Handles various text formats and notes associated with each event.
-- Deploys as a single, lightweight AWS Lambda function managed by the Serverless Framework.
+- Deploys as a single, lightweight Cloudflare Worker.
 
 ## Usage
 
 ### Deployment
 
-To deploy this function, you will need the Serverless Framework installed and your AWS credentials configured. Then, run the following command from the project root:
+This project is deployed as a Cloudflare Worker. To deploy it, you will need a Cloudflare account and the Wrangler CLI installed. Then, run the following command from the project root:
 
 ```bash
-serverless deploy
+wrangler deploy
 ```
 
-After deployment, the Serverless Framework will output the public API endpoint URL.
+After deployment, Wrangler will output the public worker URL.
 
 ### Invocation
 
-You can invoke the deployed function by making an HTTP GET request to the endpoint URL provided after deployment.
+You can invoke the deployed worker by making an HTTP GET request to the endpoint URL provided after deployment.
 
 Example using `curl`:
 
 ```bash
-curl https://<your-api-gateway-id>.execute-api.us-east-1.amazonaws.com/
+curl https://kc-symphony-music-box-events.<your-subdomain>.workers.dev/
 ```
 
 The endpoint will return a JSON array of event objects, for example:
@@ -49,10 +49,10 @@ The endpoint will return a JSON array of event objects, for example:
 
 ## Local Development
 
-You can run the function locally using the Serverless Framework's `dev` command, which emulates the AWS Lambda environment.
+You can run the worker locally using the Wrangler CLI's `dev` command, which emulates the Cloudflare Workers environment.
 
 ```bash
-serverless dev
+wrangler dev
 ```
 
-This command will allow you to test your function without deploying it to AWS.
+This command will allow you to test your function without deploying it to Cloudflare.
